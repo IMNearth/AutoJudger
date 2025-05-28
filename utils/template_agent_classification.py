@@ -173,7 +173,7 @@ def summary_prompt_step2_md(summary,candidate_problems, ability, include_text, i
                     "text": f"""Available IDs: {candidate_problems_ID}
                         Output JSON format:
                         {{
-                            "summary": "Summary the Statistics in history questions",
+                            "summary": "Summary the Statistics in history questions.Don't merely state the facts; instead, synthesize deeper, abstract, and even metaphysical patterns or principles.",
                             "think": "Reasoning here",
                             "question_index": "SELECTED_ID"
                         }}

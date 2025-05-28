@@ -13,3 +13,4 @@ rich
 pyro-ppl
 glicko2
 accelerate>=0.26.0
+clip @ git+https://github.com/openai/CLIP.git 

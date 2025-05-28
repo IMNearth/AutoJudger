@@ -24,12 +24,12 @@ AutoJudger/
 ├── model_performance/       # Model evaluation records
 ├── clip_features/           # CLIP embeddings for all questions
 ├── init/                    # Initial 10 seed questions (CLIP-based clustering)
-├── results/                 # Output results
+├── out_folder/              # Output results
 ```
 
 
 ### 📦 Install
-Git clone our repository, via the following command
+Git clone our repository, via the following command:
 ```bash
 git clone git@github.com:IMNearth/AutoJudger.git
 cd AutoJudger
@@ -58,6 +58,28 @@ pip install -r requirements.txt
 - CLIP embeddings for all questions
 - 10 initial questions selected via CLIP-based clustering
 
+### Download Model Weights
+Download `Qwen2.5-VL-7B-Instruct`, via the following command:
+```bash
+mkdir models
+cd ./models
+git clone https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct
+```
+
+### CLIP Embedding Generator (Alternative)
+This script generates embeddings (text, image, or multimodal) using the CLIP model. It supports flexible processing modes and fusion methods for combining text and image embeddings.
+
+To generate embeddings for your dataset, use the following command:
+
+```bash
+cd ./clip_features
+python clip.py \
+  --benchmark AI2D_TEST \
+  --mode multimodal \
+  --fusion_method concat \
+  --save_dir ./embeddings \
+  --download_root ./clip_models
+```
 
 ### 🚀 Run
 To launch an adaptive evaluation:

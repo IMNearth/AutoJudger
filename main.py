@@ -362,6 +362,19 @@ def generate_model_choose(model, processor, messages, max_fail_num, data_list, p
     # torch.cuda.empty_cache()
 
     return question_id, difficulty, None, thought
+def calculate_inversions(order, true_order):
+    inv_count = 0
+    for i in range(len(order)):
+        for j in range(i + 1, len(order)):
+            if true_order.index(order[i]) > true_order.index(order[j]):
+                inv_count += 1
+    return inv_count
+
+def ranking_acc(ability_dict,true_order,num,model_num):
+    ability_dict
+    current_orderRandom = sorted(ability_dict.keys(), key=lambda x: ability_dict[x][num], reverse=True)
+    return (1-calculate_inversions(current_orderRandom, true_order)*2/model_num/(model_num-1))*100
+     
 # 主函数
 def main():
     args = parse_args()
@@ -534,6 +547,15 @@ def main():
                 json.dump(difficulty_dict, file)
             with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/rec_dict.json', 'w') as file:
                 json.dump(rec_dict, file)
-
+    #ranking accuracy
+    answers = pd.read_csv(f'./model_performance/{benchmark}/{benchmark}.csv')
+    acc=answers.iloc[:,1:].mean(axis=0).to_dict()
+    test_model_acc={key:acc[key] for key in test_model_list}
+    true_order=sorted(test_model_acc.keys(),key=lambda x:test_model_acc[x],reverse=True)
+    ranks=[]
+    for num in range(len(ability_list)):
+        ranks.append(ranking_acc(ability_dict,true_order,num,len(test_model_list)))
+    with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/ranking_acc.json', 'w') as file:
+        json.dump(ranks, file)
 if __name__ == "__main__":
     main()
