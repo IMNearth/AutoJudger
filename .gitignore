@@ -1,0 +1,11 @@
+clip_features/
+data_old/
+init/
+models/
+LMUData/
+.history
+out_folder/
+data/AI2D_TEST/
+data/MMMU_DEV_VAL/
+data/MMT-Bench_VAL/
+data/SEEDBench_IMG

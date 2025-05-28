@@ -1,0 +1,15 @@
+torch>=2.5.1
+transformers>=4.50.0
+pandas>=2.2.3
+numpy>=1.26.4
+qwen-vl-utils
+torchvision
+bs4
+datasets
+pydantic
+scikit-learn
+ordered_set
+rich
+pyro-ppl
+glicko2
+accelerate>=0.26.0
