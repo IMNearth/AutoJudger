@@ -7,4 +7,5 @@ data/AI2D_TEST/
 data/MMMU_DEV_VAL/
 data/MMT-Bench_VAL/
 data/SEEDBench_IMG
-clip_features_old/
+clip_features_old/__pycache__
+__pycache__
