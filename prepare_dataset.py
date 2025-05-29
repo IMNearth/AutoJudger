@@ -57,68 +57,21 @@ def process_benchmark(benchmark, epochs, root_path='data', max_num_ratio=0.02, r
     df = pd.read_csv(orig_pt)
     
     train_df = df[['model_sha'] + train_model_list]
-    test_df = df[['model_sha'] + test_model_list]
-    full_model_list = list(train_model_list) + list(test_model_list)
-    full_df = df[['model_sha'] + full_model_list]
-    
     print("Running IRT analysis...")
-    all_prob_df, all_model_df = irt(full_df, epochs=epochs)
-    all_prob_df[['loc_diff', 'scale_diff']] = all_prob_df[['difficulty', 'difficulty_std']]
     train_prob_df, train_model_df = irt(train_df, epochs=epochs)
     train_prob_df[['loc_diff', 'scale_diff']] = train_prob_df[['difficulty', 'difficulty_std']]
-    
-    prob_ast = Problem_Assiastant(df, info_df, train_model_list, problem_difficulty=train_prob_df)
     
     # create directories for saving data
     data_folder = os.path.join(root_path, benchmark)
     train_folder = os.path.join(data_folder, 'train')
-    test_folder = os.path.join(data_folder, 'test')
-    full_folder = os.path.join(data_folder, 'full')
-    os.makedirs(full_folder, exist_ok=True)
     os.makedirs(train_folder, exist_ok=True)
-    os.makedirs(test_folder, exist_ok=True)
-
+    
     save_data(
         train_folder,
         train_model_list=train_model_list,
         train_prob_df=train_prob_df,
         train_model_df=train_model_df
     )
-    
-    save_data(
-        test_folder,
-        test_model_list=test_model_list,
-        all_prob_df=all_prob_df,
-        all_model_df=all_model_df
-    )
-    
-    save_data(
-        full_folder,
-        all_prob_df=all_prob_df,
-        all_model_df=all_model_df
-    )
-    
-    print(f"Converting CSV to JSON for {benchmark}...")
-    file_path = os.path.join(full_folder, f'{benchmark}.csv')
-    output_path = os.path.join(full_folder, f'{benchmark}.json')
-    cmd = f'cp {orig_pt} {full_folder}'
-    os.system(cmd)
-    
-    result_dict = process_file_to_dict(file_path)
-    save_dict_to_json(result_dict, output_path)
-    print(f"CSV to JSON conversion completed for {benchmark}")
-    
-    # calculate abilities for test models
-    results = []
-    for model_under_test in tqdm(test_model_list, desc=f"Evaluating models for {benchmark}"):
-        random_data, selected_diff = prob_ast.get_random_problem([model_under_test], 1, refresh=True)
-        model_result_df = calculate_abilities_df_binary_single(selected_diff, random_data)
-        results.append({"model_sha": model_under_test, "ability": model_result_df['ability'].iloc[0]})
-    
-    with open(f'{test_folder}/test_model_df_fullPb.json', 'w') as f:
-        for result in results:
-            json.dump(result, f)
-            f.write("\n")
     
     print(f"Completed processing for benchmark: {benchmark}")
 

@@ -35,16 +35,17 @@
 ### Directory Structure
 ```
 AutoJudger/
-├── models/                  # Judging agent model weights
-├── data/                    # Processed benchmark info (splits, difficulty scores)
-│   └── SEEDBench_IMG/       # Example: SEEDBench-specific data
-├── VLMEvalKit               # Model evaluation tool
+├── VLMEvalKit/              # Model evaluation tool
 ├── LMUData/                 # Raw benchmark files (i.e. tsv)
+├── models/                  # Judging agent model weights (i.e. Qwen2.5-VL-7B-Instruct)
 ├── model_performance/       # Model evaluation records
+│   └── SEEDBench_IMG/       # Example: SEEDBench-specific model responses
+├── data/                    # Processed benchmark info (splits, difficulty scores)
+│   └── SEEDBench_IMG/       # Example: SEEDBench difficulty scores
 ├── clip_features/           # CLIP embeddings for all questions
 │   └── clip_models/         # Downloaded clip model weights
 ├── init/                    # Initial 10 seed questions (CLIP-based clustering)
-├── out_folder/              # Output results
+└── out_folder/              # Output results
 ```
 
 
@@ -74,6 +75,7 @@ Download the original benchmark files (i.e. raw TSV files with questions, images
 * [MMMU_DEV_VAL.tsv](https://opencompass.openxlab.space/utils/VLMEval/MMMU_DEV_VAL.tsv) → `LMUData/MMMU_DEV_VAL.tsv`
 * [MMT-Bench_VAL.tsv](https://opencompass.openxlab.space/utils/benchmarks/MMT-Bench/MMT-Bench_VAL.tsv) → `LMUData/MMT-Bench_VAL.tsv`
 
+
 #### 3. Collect Model Responses
 Collect the model response records on these benchmarks and put them in the `model_performance/`.
 * We thank the [VLMEvalKit](https://github.com/open-compass/VLMEvalKit) for providing such a convenient tool to collect these records. 
@@ -82,10 +84,24 @@ Collect the model response records on these benchmarks and put them in the `mode
 cd VLMEvalKit
 torchrun --nproc-per-node=4 run.py --data SEEDBench_IMG --model GPT4o Qwen2.5-VL-7B-Instruct --verbose
 ```
-  
-#### 4. Estimate Question Difficulty
-Generate IRT-estimated difficulty scores for each question by running `prepare_dataset.py`. The results will be placed in the `data/` folder. 
 
+
+
+#### 4. Estimate Question Difficulty
+We have already provided the estimated question difficulty scores for `SEEDBench_IMG`, `AI2D_TEST`, `MMMU_DEV_VAL` and `MMT-Bench_VAL` in `data/question_diff.zip`.
+
+Note that, you can generate IRT-estimated difficulty scores for your own dataset by running 
+```bash
+python prepare_dataset.py --benchmark YOUR_DATASET
+```
+The scripts will create `data/YOUR_DATASET/train` directory and stores the following files
+```
+└── YOUR_DATASET
+    └── train
+        ├── train_model_df.json     # estimated model abilities
+        ├── train_model_list.json   # list of models used to estimate the difficulties
+        └── train_prob_df.json      # stimated question difficulty
+```
 Besides, under this folder, there also exists
 * Model list and benchmark metadata (`data/model_information_new.csv`)
 * Train/test splits (`data/test_model_list.json`)
