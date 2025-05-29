@@ -415,7 +415,6 @@ def ranking_acc(ability_dict,true_order,num,model_num):
 def main():
     args = parse_args()
     print(args)
-    sys.exit(0)
 
     root_path = args.root_path  # project root directory
     out_folder = args.save_dir  # output folder for results
