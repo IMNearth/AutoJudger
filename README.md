@@ -13,7 +13,7 @@
   <sup>3</sup>Shanghai Innovation Institute, Shanghai, China
 </p>
 <p align="center">
-  * Equal contribution,  † Corresponding Author
+  * Equal Contribution,  † Corresponding Author
 </p>
 <p align="center">
     <a href="https://arxiv.org/abs/2505.21389"><img src="https://img.shields.io/badge/Paper-arxiv-red" /></a>
@@ -60,7 +60,7 @@ pip install -r requirements.txt
 ### 🔗 Prepare Data
 
 #### 1. Install VLMEvalKit
-Install [VLMEvalKit](https://github.com/open-compass/VLMEvalKit) by following the instructions provided by following the [QuickStart](https://github.com/open-compass/VLMEvalKit/blob/main/docs/en/Quickstart.md). 
+Install [VLMEvalKit](https://github.com/open-compass/VLMEvalKit) by following the instructions provided by [QuickStart](https://github.com/open-compass/VLMEvalKit/blob/main/docs/en/Quickstart.md). 
 ```bash
 git clone https://github.com/open-compass/VLMEvalKit.git
 cd VLMEvalKit
