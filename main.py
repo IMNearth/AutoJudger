@@ -18,17 +18,19 @@ from utils.template_agent_classification import initialize_prompt_step1, summary
 warnings.filterwarnings('ignore')
 
 device = torch.device("cuda")
-rt_path = './'
-out_folder='out_folder'
-if not os.path.exists(f'{rt_path}/{out_folder}/'):
-        os.makedirs(f'{rt_path}/{out_folder}/')
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Process model name.')
-    parser.add_argument('--model_name', type=str, required=False, default='Qwen2.5-VL-7B-Instruct', help='Name of the model to use')
-    parser.add_argument('--benchmark', type=str, required=False, default =benchmark,  help='Name of the benchmark to use')
-    parser.add_argument('--feature', type=str, required=False, default='text', help='text,image,multimean,multiconcat')
+    parser.add_argument('--agent_model', type=str, required=False, default='Qwen2.5-VL-7B-Instruct', help='Name of the judging model to use')
+    parser.add_argument('--test_model', nargs='+', required=False, default=None, help='Name of the models to test')
+    parser.add_argument('--benchmark', type=str, required=False, default ="SEEDBench_IMG",  help='Name of the benchmark to use')
+    parser.add_argument('--feature', type=str, required=False, default='text', help='text, image, multimean, multiconcat')
+    parser.add_argument('--root_path', type=str, required=False, default='./', help='Root path of the project')
+    parser.add_argument('--save_dir', type=str, required=False, default='out_folder', help='Output folder for results')
+    parser.add_argument('--include_text', action='store_true', help='Whether to include text in the autojudger process')
+    parser.add_argument('--include_image', action='store_true', help='Whether to include image in the autojudger process')
+
     return parser.parse_args()
 
 
@@ -77,7 +79,7 @@ def load_data(benchmark, root_path, pf_data_path):
     train_model_df = pd.read_json(os.path.join(pf_data_path, 'train', 'train_model_df.json'), lines=True)
     with open(os.path.join(pf_data_path, 'train', 'train_model_list.json'), 'r', encoding='utf-8') as file:
         train_model_list = json.load(file)
-    with open(os.path.join(rt_path, 'data', 'test_model_list.json'), 'r', encoding='utf-8') as file:
+    with open(os.path.join(root_path, 'data', 'test_model_list.json'), 'r', encoding='utf-8') as file:
         test_model_list = json.load(file)
     
     full_benchmark_json_path = os.path.join(pf_data_path, f'{benchmark}.json')
@@ -94,11 +96,11 @@ def load_data(benchmark, root_path, pf_data_path):
     return prob_data, data, info_dict, info_df, train_prob_df, train_model_df, model_pf_dict, train_model_list, test_model_list
 
 
-def setup_logging(model_name, benchmark, approach):
-    if not os.path.exists(f'{rt_path}/{out_folder}/{benchmark}/{approach}'):
-        os.makedirs(f'{rt_path}/{out_folder}/{benchmark}/{approach}')
+def setup_logging(model_name, benchmark, approach, root_path, out_folder):
+    if not os.path.exists(f'{root_path}/{out_folder}/{benchmark}/{approach}'):
+        os.makedirs(f'{root_path}/{out_folder}/{benchmark}/{approach}')
     logging.basicConfig(
-        filename=f'{rt_path}/{out_folder}/{benchmark}/{approach}/logfile.log',
+        filename=f'{root_path}/{out_folder}/{benchmark}/{approach}/logfile.log',
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         filemode='w'
@@ -106,7 +108,7 @@ def setup_logging(model_name, benchmark, approach):
     logging.info(f"Model name: {model_name} Benchmark: {benchmark} Approach: {approach}")
 
 
-def get_recommended_problems(prob_ast, ability,vec):
+def get_recommended_problems(prob_ast, ability, vec):
     # recommend_pb_df, recommend_diff_df = prob_ast.get_recomm_problem_nearest(ability, top_n = 5) #prob_ast.get_recomm_problem_quantile5(ability)
     recommend_pb_df, recommend_diff_df = prob_ast.get_recomm_problem_farthest(vec,device, ability,top_n = 10)
     return recommend_pb_df, recommend_diff_df
@@ -412,44 +414,49 @@ def ranking_acc(ability_dict,true_order,num,model_num):
 
 def main():
     args = parse_args()
-    model_name = args.model_name  # 模型名称
-    benchmark = args.benchmark    # 基准测试名称
-    feature = args.feature        # 特征标识
-    #导入词向量
-    vec=np.load(f'./clip_features/{benchmark}/{feature}_embeddings.npy')
-    
-    vec = torch.from_numpy(vec).float().to(device)
-    approach = model_name  + '_' + feature  # 组合实验标识
-    
-    # 初始化是否包含文本和图像的标志
-    include_text, include_image = True, True
-    model_path = f"./models/{model_name}"  # 模型路径
-    
-    root_path = './'  # 项目根目录
-    pf_data_path = f'{rt_path}data/{benchmark}'  # 数据路径
+    print(args)
+    sys.exit(0)
 
-    # 根据模板参数调整是否包含文本/图像
+    root_path = args.root_path  # project root directory
+    out_folder = args.save_dir  # output folder for results
+    if not os.path.exists(f'{root_path}/{out_folder}/'):
+        os.makedirs(f'{root_path}/{out_folder}/')
 
-    setup_logging(model_name, benchmark, approach)
-    model, processor = initialize_model_and_processor(model_path)
-    prob_data, data, info_dict, info_df, train_prob_df, train_model_df, model_pf_dict, train_model_list, test_model_list = \
+    # Initialize the judging model and processor
+    judging_model_name = args.agent_model
+    judging_model_path = f"./models/{judging_model_name}"
+    judging_model, processor = initialize_model_and_processor(judging_model_path)
+
+    # Load the benchmark data and question difficulty & embeddings
+    benchmark = args.benchmark
+    pf_data_path = os.path.join(root_path, f'data/{benchmark}')  # data directory
+    prob_data, data, _, info_df, train_prob_df, _, model_pf_dict, train_model_list, test_model_list = \
         load_data(benchmark, root_path, pf_data_path)
-    max_num = max(200,int(len(prob_data)/20))  # 最大迭代次数
+    if args.test_model is not None: test_model_list = args.test_model
+    
+    feature = args.feature        # embedding features
+    vec = np.load(os.path.join(root_path, f'clip_features/{benchmark}/{feature}_embeddings.npy'))
+    vec = torch.from_numpy(vec).float().to(device)
+
+    include_text, include_image = args.include_text, args.include_image
+    approach = judging_model_name  + '_' + feature
+    setup_logging(judging_model_name, benchmark, approach, root_path, out_folder)
+    
+    max_num = max(200,int(len(prob_data)/20))  # maximum number of iterations
     idxlist=[]
     for index, row in train_prob_df.iterrows():
         idxlist.append(row['model_sha'])
     prob_ast = Problem_Assiastant(data, info_df, train_model_list, idxlist=idxlist, problem_difficulty=train_prob_df)
 
-    #把train_prob_df和prob_data拼起来，这样就不用费劲找两个表了
+    # concat prob_data and train_prob_df, so that we don't have to search two tables
     prob_data = pd.merge(
-            prob_data,
-            train_prob_df,
-            left_on='index',
-            right_on='model_sha',
-            how='right'
-        )
+        prob_data,
+        train_prob_df,
+        left_on='index',
+        right_on='model_sha',
+        how='right'
+    )
     
-    # 初始化字典
     ability_dict = {}
     question_dict = {}
     difficulty_dict = {}
@@ -457,13 +464,11 @@ def main():
 
     for model_under_test in test_model_list:
         torch.cuda.empty_cache()
-        logging.info(f'开始测试模型：{model_under_test}')
+        logging.info(f'[AutoJudger] Start evaluating the model: {model_under_test}')
 
-        with open(f'./init/{benchmark}/clip_text_init10.json', 'rb') as f:
-            rec_list = json.load(f)
+        with open(f'./init/{benchmark}/clip_text_init10.json', 'rb') as f: rec_list = json.load(f)
         prob_ast.get_random_problem([model_under_test], 0, refresh=True)
         random_data, selected_diff = prob_ast.update_recommended_pb_diff(rec_list)
-        # logging.info(random_data)
         model_result_df = calculate_abilities_df_binary_single(selected_diff, random_data)
         prob_ast.update_recommended_pb_diff(list(selected_diff['model_sha'].values))
 
@@ -472,39 +477,38 @@ def main():
         difficulty_list = [float(i) for i in list(selected_diff['difficulty'].values)]
         rec_dict[model_under_test] = [] # 初始化当前模型的记录
 
-        # 处理初始数据
-        ini_merged_data =prob_data[prob_data['index'].isin(prob_ast.recommend_diff_df['model_sha'].to_list())]
+        # process the initial data
+        ini_merged_data = prob_data[prob_data['index'].isin(prob_ast.recommend_diff_df['model_sha'].to_list())]
         ini_data_list = process_data_list(ini_merged_data, model_pf_dict, model_under_test)
         
-        # 初始化 prompt
+        # init prompt
         ability = model_result_df['ability'].values[0]
-        recommend_pb_df, recommend_diff_df = get_recommended_problems(prob_ast, ability,vec)
+        recommend_pb_df, recommend_diff_df = get_recommended_problems(prob_ast, ability, vec)
 
-        # 记录第一轮推荐的难度
+        # record the first round of recommended difficulties
         first_round_rec = dict(zip(recommend_diff_df['model_sha'], recommend_diff_df['difficulty'].astype(float)))
         rec_dict[model_under_test].append(first_round_rec)
 
         rec_merged_data =prob_data[prob_data['index'].isin(recommend_diff_df['model_sha'].to_list())]
         data_list = process_data_list(rec_merged_data, model_pf_dict, model_under_test)
-        #这里改成，messages有多种形式，summary、list或dict（对应三种方法）
         
+        # based on the feature, we can decide whether to include text or image
         message1 = initialize_prompt_step1(ini_data_list,  include_text, include_image)
-        summary=generate_model_summary(model, processor, message1, 5,question_list,ini_merged_data,random_data[['model_sha',model_under_test]],model_under_test)
+        summary = generate_model_summary(judging_model, processor, message1, 5,question_list,ini_merged_data,random_data[['model_sha',model_under_test]],model_under_test)
         logging.info(summary)
         message2 = summary_prompt_step2_md(summary, data_list, ability, include_text, include_image)
-        question_id, difficulty, _, _=generate_model_choose(model, processor, message2, 2, data_list, prob_ast, recommend_diff_df)
+        question_id, difficulty, _, _=generate_model_choose(judging_model, processor, message2, 2, data_list, prob_ast, recommend_diff_df)
 
         model_result_df = calculate_abilities_df_binary_single(prob_ast.recommend_diff_df, prob_ast.recommend_pb_df)
         ability_list.append(model_result_df['ability'].values[0])
         question_list.append(question_id)
         difficulty_list.append(difficulty)
 
-        # 迭代
         for i in tqdm(range(max_num)):
             ability = model_result_df['ability'].values[0]
             recommend_pb_df, recommend_diff_df = get_recommended_problems(prob_ast, ability,vec)
 
-            # 记录当前轮推荐的难度
+            # record the current round of recommended difficulties
             current_round_rec = dict(zip(recommend_diff_df['model_sha'], recommend_diff_df['difficulty'].astype(float)))
             rec_dict[model_under_test].append(current_round_rec)
 
@@ -513,10 +517,10 @@ def main():
 
             ########################
             message1 = summary_prompt_step1_multi(summary,process_data_list(prob_data[prob_data['index']==int(question_id)], model_pf_dict, model_under_test) , include_text, include_image)
-            summary=generate_model_summary_itera(model, processor, message1, 5,summary, int(question_id), prob_data, data[['model_sha',model_under_test]],model_under_test)
+            summary = generate_model_summary_itera(judging_model, processor, message1, 5,summary, int(question_id), prob_data, data[['model_sha',model_under_test]],model_under_test)
             logging.info(summary)
             message2 = summary_prompt_step2_md(summary, data_list, ability, include_text, include_image)
-            question_id, difficulty, _, _=generate_model_choose(model, processor, message2, 2, data_list, prob_ast, recommend_diff_df)
+            question_id, difficulty, _, _ = generate_model_choose(judging_model, processor, message2, 2, data_list, prob_ast, recommend_diff_df)
             #######################
 
             model_result_df = calculate_abilities_df_binary_single(prob_ast.recommend_diff_df, prob_ast.recommend_pb_df)
@@ -532,17 +536,17 @@ def main():
             question_dict[model_under_test] = question_list
             difficulty_dict[model_under_test] = difficulty_list
 
-            with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/ability_dict.json', 'w') as file:
+            with open(f'{root_path}/{out_folder}/{benchmark}/{approach}/ability_dict.json', 'w') as file:
                 json.dump(ability_dict, file)
-            with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/question_dict.json', 'w') as file:
+            with open(f'{root_path}/{out_folder}/{benchmark}/{approach}/question_dict.json', 'w') as file:
                 # json.dump(convert_numpy_int64(question_dict), file)
                 json.dump(question_dict, file)
-            with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/difficulty_dict.json', 'w') as file:
+            with open(f'{root_path}/{out_folder}/{benchmark}/{approach}/difficulty_dict.json', 'w') as file:
                 json.dump(difficulty_dict, file)
-            with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/rec_dict.json', 'w') as file:
+            with open(f'{root_path}/{out_folder}/{benchmark}/{approach}/rec_dict.json', 'w') as file:
                 json.dump(rec_dict, file)
     
-    #ranking accuracy
+    # ranking accuracy
     answers = pd.read_csv(f'./model_performance/{benchmark}/{benchmark}.csv')
     acc=answers.iloc[:,1:].mean(axis=0).to_dict()
     test_model_acc={key:acc[key] for key in test_model_list}
@@ -550,7 +554,7 @@ def main():
     ranks=[]
     for num in range(len(ability_list)):
         ranks.append(ranking_acc(ability_dict,true_order,num,len(test_model_list)))
-    with open(f'{rt_path}/{out_folder}/{benchmark}/{approach}/ranking_acc.json', 'w') as file:
+    with open(f'{root_path}/{out_folder}/{benchmark}/{approach}/ranking_acc.json', 'w') as file:
         json.dump(ranks, file)
 
 

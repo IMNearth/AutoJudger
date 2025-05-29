@@ -112,7 +112,8 @@ Generate CLIP embeddings for the evaluation benchmark by using the following com
 cd ./clip_features
 python clip.py --benchmark AI2D_TEST --mode multimodal --fusion_method concat --save_dir ./ --download_root ./clip_models
 ```
-This script generates embeddings (text, image, or multimodal) using the CLIP model. It supports flexible processing modes and fusion methods for combining text and image embeddings. Here is the explanations for the **arguments**:
+This script generates embeddings (text, image, or multimodal) using the CLIP model. It supports flexible processing modes and fusion methods for combining text and image embeddings. 
+Here is the explanations for the **arguments**:
 - `--benchmark (str)`: Set the benchmark name that are supported in VLMEvalKit.
 - `--mode (str, default to 'multimodal', choices are ['text', 'image', 'multimodal'])`: When `mode` set to "multimodal", both text and image embeddings are used to construct the feature for questions.
 - `--fusion_method (str, default to 'concat', choices are ['mean', 'sum', 'concat'])`: When `fusion_method` set to "concat", we use the concated embeddings from text and image as the question feature.
@@ -129,16 +130,18 @@ git clone https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct
 ```
 
 ### 🚀 Run
-To launch an adaptive evaluation:
-```bash
-python main.py \
-  --model_name Qwen2.5-VL-7B-Instruct \
-  --benchmark SEEDBench_IMG \
-  --feature text
+To launch an adaptive evaluation on a specific benchmark, you should run script `main.py`.  This script accepts several command-line **arguments** to control model evaluation and benchmarking behavior:
+- `agent_model (str, default='Qwen2.5-VL-7B-Instruct')`: Specifies the name of the judging model (or "agent model") used for automatic evaluation.
+- `test_model (list of str, optional)`: One or more names of the models to be evaluated. You can pass multiple model names separated by spaces (e.g., --test_model modelA modelB).
+- `benchmark (str, default='SEEDBench_IMG')`: Sets the benchmark dataset to use for evaluation. 
+- `feature (str, default='text')`: Indicates the type of feature representation to use. Options include 'text' -- Use only text-based features; 'image' -- Use only image-based features; 'multimean' -- Use the mean of text and image features, 'multiconcat' -- Use concatenated text and image features.
+- `root_path (str, default='./')`: Specifies the root directory of the project. 
+- `include_text (flag)`: If provided, includes textual content in the evaluation process.
+- `include_image (flag)`: If provided, includes visual content in the evaluation process.
 
-# Parameters:
-# --feature: Feature type [text|image|multimean|multiconcat]
-# --benchmark: benchmark name
+Here is an example that using `Qwen2.5-VL-7B-Instruct` as the judging agent to evaluate `MiniCPM-V-2` and `Slime-7B` on `SEEDBench_IMG`.
+```bash
+python main.py --agent_model Qwen2.5-VL-7B-Instruct --test_model MiniCPM-V-2 Slime-7B --benchmark SEEDBench_IMG --include_text --include_image
 ```
 
 ## 📊 Citation
