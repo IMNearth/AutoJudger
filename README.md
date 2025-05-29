@@ -84,6 +84,17 @@ Collect the model response records on these benchmarks and put them in the `mode
 cd VLMEvalKit
 torchrun --nproc-per-node=4 run.py --data SEEDBench_IMG --model GPT4o Qwen2.5-VL-7B-Instruct --verbose
 ```
+* After collect the model responses, we have to transform these raw responses into a table. Below is an example of the transformed response records on the `SEEDBench_IMG` benchmark:
+
+| model_sha | 360VL-70B | Aquila-VL-2B | ...  | xgen-mm-phi3-interleave-r-v1.5 |
+| --------- | --------- | ------------ | ---- | ------------------------------ |
+| 39        | 1         | 1            | ...  | 1                              |
+| ...       | ...       | ...          | ...  | ...                            |
+| 117       | 0         | 1            | ...  | 0                              |
+| ...       | ...       | ...          | ...  | ...                            |
+| 106418    | 1         | 1            | ...  | 1                              |
+
+Here, **rows** of the **first column** indicate question IDs, and the **subsequent columns** correspond to different model names. The values `0` and `1` indicate whether a model answered the question incorrectly or correctly, respectively. Therefore, each row represents whether the response record of different models for this question is correct or incorrect.
 
 
 
