@@ -17,6 +17,7 @@
 </p>
 <p align="center">
     <a href="https://arxiv.org/abs/2505.21389"><img src="https://img.shields.io/badge/Paper-arxiv-red" /></a>
+    <img src="https://img.shields.io/badge/Licence-Apache_2.0-Green" />
 </p>
 
 ## 📝 Introduction
