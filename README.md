@@ -1,11 +1,29 @@
 <div align="center">
-  <h2>AutoJudger: An Agent-Driven Framework for Efficient Benchmarking of MLLMs</h2>
+  <h1 style="display: inline-block; font-size: 32px;">
+  <p align="center">
+    <img src="assets/logo.png" width="80" style="margin-bottom: 0.5;"/>
+    AutoJudger: An Agent-Driven Framework for Efficient Benchmarking of MLLMs
+  <p>
+  </h1>
 </div>
+<p align="center"><strong>Xuanwen Ding<sup>1,3*</sup> , Chengjun Pan<sup>1*</sup>  , Zejun Li<sup>1*</sup>  , Jiwen Zhang<sup>1*</sup>  ,<br /> Siyuan Wang<sup>2</sup>  ,  Zhongyu Wei<sup>1,3†</sup>.</strong></p>
+<p align="center">
+  <sup>1</sup>Fudan University, Shanghai China <br />
+  <sup>2</sup>University of Southern California, Los Angeles, USA <br />
+  <sup>3</sup>Shanghai Innovation Institute, Shanghai, China
+</p>
+<p align="center">
+  * Equal contribution,  † Corresponding Author
+</p>
+<p align="center">
+    <a href="https://arxiv.org/abs/2505.21389"><img src="https://img.shields.io/badge/Paper-arxiv-red" /></a>
+    <img src="https://img.shields.io/github/stars/IMNearth/UIHawk?label=Stars" />
+</p>
 
 ## 📝 Introduction
 
 <p align="center">
-  <img src="resources/Framework.png" width="100%">
+  <img src="assets/Framework.png" width="100%">
 </p>
 
 **AutoJudger** is an agent-driven framework for efficient and adaptive benchmarking of MLLMs that tackles this escalating cost. AutoJudger employs the Item Response Theory (IRT) to estimate the question difficulty and an autonomous evaluation agent to dynamically select the most informative test questions based on the model’s real-time performance. Specifically, AutoJudger incorporates two pivotal components: a semantic-aware retrieval mechanism to ensure that selected questions cover diverse and challenging scenarios across both vision and language modalities, and a dynamic memory that maintains contextual statistics of previously evaluated questions to guide coherent and globally informed question selection throughout the evaluation process.Extensive experiments on four representative multimodal benchmarks demonstrate that our adaptive framework dramatically reduces evaluation expenses, i.e. AutoJudger uses only 4% of the data to achieve over 90% ranking accuracy with the full benchmark evaluation on MMT-Bench. 
