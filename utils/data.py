@@ -1,6 +1,7 @@
 from sklearn.model_selection import train_test_split
 from utils.util import get_model_param
 
+
 def dataSplit_sample(df, info_df, test_size=0.2):
     """
     Split data into training and test sets.
@@ -13,6 +14,7 @@ def dataSplit_sample(df, info_df, test_size=0.2):
     full_model_list = list(train_model_list) + list(test_model_list)
     full_data = df[[model_sha] + full_model_list]
     return full_data, full_model_list, train_data, train_model_list, test_data, test_model_list
+
 
 def dataSplit_sample_basedParam(df, info_dict, test_size=0.2):
     """

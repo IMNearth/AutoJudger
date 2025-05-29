@@ -67,6 +67,8 @@ def resize_base64_image_pixel(base64_data, min_pixels, max_pixels):
     image.save(buffered, format=img_format)
     new_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return f"{header},{new_base64}"
+
+
 def irt(item_responses, epochs=1000, diff_param = None):
     n_p = len(item_responses['model_sha'])
     model_sha = item_responses['model_sha'].copy()

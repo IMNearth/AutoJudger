@@ -8,22 +8,25 @@ import pandas as pd
 from io import BytesIO
 from typing import List, Dict, Any
 import base64
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate embeddings using CLIP model")
     parser.add_argument('--benchmark', type=str, required=True)
     parser.add_argument('--download_root', type=str)
-    parser.add_argument('--data_dir', type=str, default="../LMUData/")
+    parser.add_argument('--data_dir', type=str, default="LMUData/")
     parser.add_argument('--mode', type=str, choices=['text', 'image', 'multimodal'], default='multimodal')
-    parser.add_argument('--fusion_method', type=str, choices=['mean', 'sum', 'concat'], default='mean')
+    parser.add_argument('--fusion_method', type=str, choices=['mean', 'sum', 'concat'], default='concat')
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--save_dir', type=str, default='./')
     parser.add_argument('--model_name', type=str, default='ViT-B/32')
     return parser.parse_args()
 
+
 if __name__ == "__main__":
     args = parse_args()
     device = args.device if torch.cuda.is_available() else 'cpu'
-    model, preprocess = clip.load(args.model_name, device=device, download_root=args.download_root)
+    model, preprocess = ni(args.model_name, device=device, download_root=args.download_root)
     data_path = f"{args.data_dir}/{args.benchmark}.tsv"
     prob_data = pd.read_csv(data_path)
     all_possible_options = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
